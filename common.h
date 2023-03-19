@@ -1,6 +1,3 @@
-#ifndef SW_COMMON_INCL
-#define SW_COMMON_INCL (1)
-
 //#include <stddef.h>       // size_t, ptrdiff_t, offsetof
 //#include <stdint.h>       // fixed width integer types & more (e.g. int_fast32_t)
 //#include <inttypes.h>     // stdint + portable format conversions
@@ -32,10 +29,13 @@
 //#include <stdatomic.h>    // atomic types & ops (e.g. atomic_int, store, load, etc.) (__STDC_NO_ATOMICS__ is 1 if not supported)
 //#include <stdio.h>        // standard input/output (e.g. fopen, printf, etc.)
 
-/// USER OVERWRITABLE DEFINES
-/// * `SW_API`: precedes every function decl & impl (defaults to static).
-/// * `sw_always_assert`: defaults to libc assert (wrapped to support variadic args and to always assert even with NDEBUG). If NO_LIBC is defined, it simply exits (with error code 1) on failure. In both cases, the assert is always active (unlike its counterpart `NW_DEBUG_ASSERT`, which is the same as `NW_ALWAYS_ASSERT` unless NDEBUG is defined, where it expands to nothing).
-/// * `sw_static_assert`: defaults to _Static_assert().
+#ifndef SW_COMMON_INCL
+#define SW_COMMON_INCL (1)
+
+// USER OVERWRITABLE DEFINES
+// - `SW_API`: precedes every function decl & impl (defaults to static).
+// - `sw_always_assert`: defaults to libc assert (wrapped to support variadic args and to always assert even with NDEBUG). If NO_LIBC is defined, it simply exits (with error code 1) on failure. In both cases, the assert is always active (unlike its counterpart `NW_DEBUG_ASSERT`, which is the same as `NW_ALWAYS_ASSERT` unless NDEBUG is defined, where it expands to nothing).
+// - `sw_static_assert`: defaults to _Static_assert().
 
 // `SW_API` prefix used to denote all functions in this module (defaults to `static`).
 #ifndef SW_API
@@ -117,7 +117,7 @@ sw_static_assert(sizeof(sw_U8)  == 1 && sizeof(sw_I8)  == 1 && sizeof(sw_CharA) 
 sw_static_assert(sizeof(sw_U16) == 2 && sizeof(sw_I16) == 2, "invalid 16-bits primitive types");
 sw_static_assert(sizeof(sw_U32) == 4 && sizeof(sw_I32) == 4 && sizeof(sw_F32) == 4, "invalid 32-bits primitive types");
 sw_static_assert(sizeof(sw_U64) == 8 && sizeof(sw_I64) == 8 && sizeof(sw_F64) == 8, "invalid 64-bits primitive types");
-sw_static_assert(sizeof(sw_Nat) == sizeof(sw_Int) && sizeof(sw_Nat) >= sizeof(sw_Void*), "inconsistent sizes for sw_Nat and sw_Int");
+sw_static_assert(sizeof(sw_Nat) == sizeof(sw_Int) && sizeof(sw_Nat) >= sizeof(sw_Void*), "invalid sizes for sw_Nat and sw_Int types");
 
 // type constants
 #define SW_NULL ((void*)0)
@@ -187,9 +187,11 @@ sw_static_assert(sizeof(sw_Nat) == sizeof(sw_Int) && sizeof(sw_Nat) >= sizeof(sw
 
 
 // bit ops
+#define sw_bsizeof(T) sizeof(T)
 #define sw_offsetof(T,m) (sw_Nat)(&(((T*)0)->m))
-#define sw_bitsizeof(v) (sizeof(v)<<3)
+#define sw_bitsizeof(T) (sizeof(T)<<3)
 // TODO: more stdbit.h?
+
 
 // `sw_bitsum32` counts # of 1-bits (or, equivalently, the sum of the bits).
 SW_API inline sw_U32 sw_bitsum32(sw_U32 x) {
@@ -246,7 +248,7 @@ SW_API inline sw_U32 sw_bitclz32(sw_U32 x) {
     x |= x >> 4;
     x |= x >> 8;
     x |= x >> 16;
-    // hp SAT: all bits after lz are now 1-bits (i.e. hp satisfied)!
+    // hp sat: all bits after lz are now 1-bits!
     return 32 - sw_bitsum32(x);  // well defined in 0: returns 32 (bitwidth).
 #elif 0
     // bisection + nibble lookup (likely less performant).
@@ -254,8 +256,8 @@ SW_API inline sw_U32 sw_bitclz32(sw_U32 x) {
     // + replaced comparisons of the form (x >= (1u << P)) with (x & BITMASK((bitindex >= P) ? 1 : 0))
     // + replaced static table with 0b01010101101011u (U2[15]) and adjusted lookup.
     // note that the above constant can fit in a U32 iff we do not store the mapping for zero (otherwise we'd need 33 bits)
-    #define SW_CLZ32_U2x15_TABLE 0b01010101101011u;
-    #define SW_CLZ32_U2x15_TABLE_GET(index_in_range_1_16) (28u + ((SW_CLZ32_U2x15_TABLE >> (((index_in_range_1_16) - 1) * 2)) & 0b11))
+    #define SWL_CLZ32_U2x15_TABLE 0b01010101101011u;
+    #define SWL_CLZ32_U2x15_TABLE_GET(index_in_range_1_16) (28u + ((SW_CLZ32_U2x15_TABLE >> (((index_in_range_1_16) - 1) * 2)) & 0b11))
     sw_U32 n;
     if (x & 0xFFFF0000u) {
         if (x & 0xFF000000u) {
@@ -271,9 +273,9 @@ SW_API inline sw_U32 sw_bitclz32(sw_U32 x) {
         }
     }
     x >>= n;
-    return SW_CLZ32_U2x15_TABLE_GET(x) - n;
-    #undef SW_CLZ32_U2x15_TABLE
-    #undef SW_CLZ32_U2x15_TABLE_GET
+    return SWL_CLZ32_U2x15_TABLE_GET(x) - n;
+    #undef SWL_CLZ32_U2x15_TABLE
+    #undef SWL_CLZ32_U2x15_TABLE_GET
 #else
     return __builtin_clz(x);
 #endif
@@ -289,7 +291,7 @@ SW_API inline sw_U64 sw_bitclz64(sw_U64 x) {
     x |= x >> 8;
     x |= x >> 16;
     x |= x >> 32;
-    // hp SAT: all bits after lz are now 1-bits!
+    // hp sat: all bits after lz are now 1-bits!
     return 64 - sw_bitsum64(x);  // well defined in 0: returns 64 (bitwidth).
 #elif 0
     // bisection + nibble lookup (likely less performant): current implementation not defined in zero (to minimize lookup memory) but can easily be adjusted.
@@ -351,7 +353,7 @@ SW_API inline sw_U32 sw_bitclear32(sw_U32 x, sw_Nat i, sw_Nat w) {
 }
 // `sw_bitclear64` clears target bits (from bitindex i to i + bitwidth w).
 SW_API inline sw_U64 sw_bitclear64(sw_U64 x, sw_Nat i, sw_Nat w) {
-    sw_debug_assert(i < 64 && w <= (64 - i) && w < 64, "`bitclear32` overflow!");
+    sw_debug_assert(i < 64 && w <= (64 - i) && w < 64, "`bitclear64` overflow!");
     return (x & ~(SW_U64_LO(w) << i));
 }
 // `sw_bitfill32` fills targets bits (from bitindex i to i + bitwidth w).
@@ -383,6 +385,30 @@ SW_API inline sw_U32 sw_bitwrite32(sw_U32 x, sw_Nat i, sw_Nat w, sw_U32 v) {
 SW_API inline sw_U64 sw_bitwrite64(sw_U64 x, sw_Nat i, sw_Nat w, sw_U64 v) {
     sw_debug_assert(i < 64 && w <= (64 - i) && w < 64 && v <= SW_U64_LO(w), "`bitwrite64` overflow!");
     return (x & ~(SW_U64_LO(w) << i)) | (v << i);
+}
+// `sw_bitrotl32` rotates left by `i` bit-positions in a circular fashion (i.e. a left-shift where vacant bit-positions are filled-in with the ones shifted out of the sequence).
+SW_API inline sw_U32 sw_bitrotl32(sw_U32 x, sw_U32 i) {
+    sw_debug_assert(i > 0 && i < 32, "`bitrotl32` overflow!");
+    // source: https://en.wikipedia.org/wiki/Circular_shift
+    return x << i | x >> (32 - i);
+}
+// `sw_bitrotl64` rotates left by `i` bit-positions in a circular fashion (i.e. a left-shift where vacant bit-positions are filled-in with the ones shifted out of the sequence).
+SW_API inline sw_U64 sw_bitrotl64(sw_U64 x, sw_U64 i) {
+    sw_debug_assert(i > 0 && i < 64, "`bitrotl64` overflow!");
+    // source: https://en.wikipedia.org/wiki/Circular_shift
+    return x << i | x >> (64 - i);
+}
+// `sw_bitrotr32` rotates right by `i` bit-positions in a circular fashion (i.e. a right-shift where vacant bit-positions are filled-in with the ones shifted out of the sequence).
+SW_API inline sw_U32 sw_bitrotr32(sw_U32 x, sw_U32 i) {
+    sw_debug_assert(i > 0 && i < 32, "`bitrotr32` overflow!");
+    // source: https://en.wikipedia.org/wiki/Circular_shift
+    return x >> i | x << (32 - i);
+}
+// `sw_bitrotr64` rotates right by `i` bit-positions in a circular fashion (i.e. a right-shift where vacant bit-positions are filled-in with the ones shifted out of the sequence).
+SW_API inline sw_U64 sw_bitrotr64(sw_U64 x, sw_U64 i) {
+    sw_debug_assert(i > 0 && i < 64, "`bitrotr64` overflow!");
+    // source: https://en.wikipedia.org/wiki/Circular_shift
+    return x >> i | x << (64 - i);
 }
 // `sw_bitreverse8` returns the input with its bits reversed.
 SW_API inline sw_U8 sw_bitreverse8(sw_U8 x) {
@@ -456,19 +482,6 @@ SW_API inline sw_U64 sw_bswap64(sw_U64 x) {
     return __builtin_bswap64(x);
 #endif
 }
-
-// TODO: RBIT-like, must work up to 64 bit
-// `sw_bitreverseW` reverses bits for an unsigned integer with bitwidth w (up to 32).
-// SW_API inline sw_U32 sw_bitreverseW(sw_U32 x, sw_Nat w) {
-//     sw_debug_assert(w <= 32, "`bitreverse32` overflow!");
-//     x = ((x & 0x55555555) <<  1) | ((x & 0xAAAAAAAA) >>  1);
-//     x = ((x & 0x33333333) <<  2) | ((x & 0xCCCCCCCC) >>  2);
-//     x = ((x & 0x0F0F0F0F) <<  4) | ((x & 0xF0F0F0F0) >>  4);
-//     x = ((x & 0x00FF00FF) <<  8) | ((x & 0xFF00FF00) >>  8);
-//     x = ((x & 0x0000FFFF) << 16) | ((x & 0xFFFF0000) >> 16);
-//     return x >> (32 - w);
-// }
-// 64-bit
 
 
 // memory ops
