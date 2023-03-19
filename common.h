@@ -34,8 +34,11 @@
 
 // USER OVERWRITABLE DEFINES
 // - `SW_API`: precedes every function decl & impl (defaults to static).
-// - `sw_always_assert`: defaults to libc assert (wrapped to support variadic args and to always assert even with NDEBUG). If NO_LIBC is defined, it simply exits (with error code 1) on failure. In both cases, the assert is always active (unlike its counterpart `NW_DEBUG_ASSERT`, which is the same as `NW_ALWAYS_ASSERT` unless NDEBUG is defined, where it expands to nothing).
-// - `sw_static_assert`: defaults to _Static_assert().
+// - `SW_DEBUG`: compile-time flag signaling debug-mode is on/off (used for debug-only assertions i.e. `sw_debug_assert`).
+// - `SW_NO_BUILTIN`: compile-time flag disabling the use of gcc-style `__builtin_*` functions in the source.
+// - `sw_always_assert`: by default crashes at run-time if the condition is false.
+// - `sw_debug_assert`: by default, matches the behavior of `sw_always_assert` if `SW_DEBUG` is non-zero or expands to nothing.
+// - `sw_static_assert`: by default crashes at compile-time if the contion is false.
 
 // `SW_API` prefix used to denote all functions in this module (defaults to `static`).
 #ifndef SW_API
@@ -82,11 +85,13 @@
 #ifndef sw_always_assert
 #define sw_always_assert(cond,...) do{if(!(cond)){(*(volatile int*)0=0);}}while(0)
 #endif
-// `sw_debug_assert` is active only in debug mode and behaves like `SW_ALWAYS_ASSERT`.
+// `sw_debug_assert` is an overridable run-time assert macro, by default active only in debug-mode (`SW_DEBUG` flag) and behaving like `sw_always_assert`.
+#ifndef sw_debug_assert
 #if SW_DEBUG
 #define sw_debug_assert(cond,...) sw_always_assert(cond,__VA_ARGS__)
 #else
 #define sw_debug_assert(cond,...) ((void)0)
+#endif
 #endif
 
 // primitive types
