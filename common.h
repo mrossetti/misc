@@ -1,33 +1,34 @@
-//#include <stddef.h>       // size_t, ptrdiff_t, offsetof
-//#include <stdint.h>       // fixed width integer types & more (e.g. int_fast32_t)
-//#include <inttypes.h>     // stdint + portable format conversions
-//#include <limits.h>       // int limits
-//#include <stdckdint.h>    // macros for checked integer arithmetic (since C23)
-//#include <fenv.h>         // floating-point behavior (e.g. control rounding)
-//#include <float.h>        // float limits
-//#include <complex.h>      // complex numbers (__STDC_NO_COMPLEX__ is 1 if not supported)
-//#include <stdbool.h>      // _Bool, true, false
-//#include <stdbit.h>       // popcount, rotl, rotr, etc. (since C23)
-//#include <ctype.h>        // isalpha, isalnum, isspace & friends
-//#include <wctype.h>       // iswalpha, iswdigit, iswspace, iswprint, iswupper & friends
-//#include <wchar.h>        // extended utilities (e.g. wprintf)
-//#include <uchar.h>        // utilities for managing and converting UTF16 and UTF32
-//#include <string.h>       // memory primitives (memcpy, memset) & str ops (strchr, etc.)
-//#include <math.h>         // math & trigonometric functions
-//#include <tgmath.h>       // type-generic math (convenience macros wrapping math.h and complex.h)
-//#include <time.h>         // time and date utilities
-//#include <locale.h>       // local formats for date, currency & more
-//#include <assert.h>       // assert macro (only ifndef NDEBUG, i.e. DEBUG builds)
-//#include <errno.h>        // system error codes set by some system functions
-//#include <signal.h>       // system level handling of signals like ^C to interrupt
-//#include <setjmp.h>       // non-local jumps meant for embedded error-handling
-//#include <stdnoreturn.h>  // noreturn convenience macro, may allow better cc optimizations
-//#include <stdarg.h>       // va_list & friends
-//#include <stdalign.h>     // alignas and alignof macros
-//#include <stdlib.h>       // malloc, atoi, rand, abs, bsearch, qsort, exit, system to run cmds in shell & more.
-//#include <threads.h>      // working with threads & mutexes (e.g. thrd_create, thrd_join, mtx_lock, mtx_unlock) (__STDC_NO_THREADS__ is 1 if not supported)
-//#include <stdatomic.h>    // atomic types & ops (e.g. atomic_int, store, load, etc.) (__STDC_NO_ATOMICS__ is 1 if not supported)
-//#include <stdio.h>        // standard input/output (e.g. fopen, printf, etc.)
+//#include <assert.h>       // [C89] assert macro (only ifndef NDEBUG, i.e. DEBUG builds)
+//#include <stddef.h>       // [C89] size_t, ptrdiff_t, offsetof, etc.
+//#include <stdint.h>       // [C99] fixed width integer types & more (e.g. int_fast32_t)
+//#include <inttypes.h>     // [C99] stdint + portable format conversions
+//#include <limits.h>       // [C89] integers limits
+//#include <stdckdint.h>    // [C23] checked integer arithmetic macros
+//#include <fenv.h>         // [C99] float environment (e.g. control rounding behavior)
+//#include <float.h>        // [C89] float limits
+//#include <complex.h>      // [C99] complex number arithmetic (__STDC_NO_COMPLEX__ is 1 if not supported)
+//#include <stdbool.h>      // [C99] _Bool, true, false
+//#include <stdbit.h>       // [C23] popcount, rotl, rotr, etc.
+//#include <iso646.h>       // [C95] alternative ascii operator spellings (e.g. && -> and, || -> or, ^ -> xor, etc.)
+//#include <ctype.h>        // [C89] isalpha, isalnum, isspace & friends
+//#include <wctype.h>       // [C95] iswalpha, iswdigit, iswspace, iswprint, iswupper & friends
+//#include <wchar.h>        // [C95] wide characters extended utilities (e.g. wprintf)
+//#include <uchar.h>        // [C11] UTF16 and UTF32 utilities
+//#include <string.h>       // [C89] memory primitives (memcpy, memset) & str ops (strchr, etc.)
+//#include <math.h>         // [C89] math & trigonometric functions
+//#include <tgmath.h>       // [C99] type-generic math (convenience macros wrapping math.h and complex.h)
+//#include <time.h>         // [C89] time and date utilities
+//#include <locale.h>       // [C89] local formats for date, currency & more
+//#include <errno.h>        // [C89] errno (and macros) used by system functions to report errors
+//#include <signal.h>       // [C89] system level handling of signals like ^C to interrupt
+//#include <setjmp.h>       // [C89] non-local jumps meant for embedded error-handling
+//#include <stdnoreturn.h>  // [C11] noreturn convenience macro, may allow better cc optimizations
+//#include <stdarg.h>       // [C89] va_list & friends
+//#include <stdalign.h>     // [C11] alignas and alignof macros
+//#include <stdlib.h>       // [C89] malloc, atoi, rand, abs, bsearch, qsort, exit, system to run cmds in shell & more.
+//#include <threads.h>      // [C11] threads & mutexes (e.g. thrd_create, thrd_join, mtx_lock, mtx_unlock) (__STDC_NO_THREADS__ is 1 if not supported)
+//#include <stdatomic.h>    // [C11] atomic types & ops (e.g. atomic_int, store, load, etc.) (__STDC_NO_ATOMICS__ is 1 if not supported)
+//#include <stdio.h>        // [C89] standard input/output (e.g. fopen, printf, etc.)
 
 #ifndef SW_COMMON_INCL
 #define SW_COMMON_INCL (1)
@@ -351,23 +352,23 @@ SW_API inline sw_U64 sw_bitflip64(sw_U64 x, sw_Nat i, sw_Nat w) {
     sw_debug_assert(i < 64 && w <= (64 - i) && w < 64, "`bitflip64` overflow!");
     return (x ^ (SW_U64_LO(w) << i));
 }
-// `sw_bitclear32` clears target bits (from bitindex i to i + bitwidth w).
-SW_API inline sw_U32 sw_bitclear32(sw_U32 x, sw_Nat i, sw_Nat w) {
+// `sw_bitfillz32` fills target bits (from bitindex i to i + bitwidth w) with zeros.
+SW_API inline sw_U32 sw_bitfillz32(sw_U32 x, sw_Nat i, sw_Nat w) {
     sw_debug_assert(i < 32 && w <= (32 - i) && w < 32, "`bitclear32` overflow!");
     return (x & ~(SW_U32_LO(w) << i));
 }
-// `sw_bitclear64` clears target bits (from bitindex i to i + bitwidth w).
-SW_API inline sw_U64 sw_bitclear64(sw_U64 x, sw_Nat i, sw_Nat w) {
+// `sw_bitfillz64` fills target bits (from bitindex i to i + bitwidth w) with zeros.
+SW_API inline sw_U64 sw_bitfillz64(sw_U64 x, sw_Nat i, sw_Nat w) {
     sw_debug_assert(i < 64 && w <= (64 - i) && w < 64, "`bitclear64` overflow!");
     return (x & ~(SW_U64_LO(w) << i));
 }
-// `sw_bitfill32` fills targets bits (from bitindex i to i + bitwidth w).
-SW_API inline sw_U32 sw_bitfill32(sw_U32 x, sw_Nat i, sw_Nat w) {
+// `sw_bitfillo32` fills targets bits (from bitindex i to i + bitwidth w) with ones.
+SW_API inline sw_U32 sw_bitfillo32(sw_U32 x, sw_Nat i, sw_Nat w) {
     sw_debug_assert(i < 32 && w <= (32 - i) && w < 32, "`bitfill32` overflow!");
     return (x | (SW_U32_LO(w) << i));
 }
-// `sw_bitfill64` fills targets bits (from bitindex i to i + bitwidth w).
-SW_API inline sw_U64 sw_bitfill64(sw_U64 x, sw_Nat i, sw_Nat w) {
+// `sw_bitfillo64` fills targets bits (from bitindex i to i + bitwidth w) with ones.
+SW_API inline sw_U64 sw_bitfillo64(sw_U64 x, sw_Nat i, sw_Nat w) {
     sw_debug_assert(i < 64 && w <= (64 - i) && w < 64, "`bitfill64` overflow!");
     return (x | (SW_U64_LO(w) << i));
 }
