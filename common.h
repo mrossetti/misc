@@ -38,7 +38,7 @@
 // - `SW_DEBUG`: compile-time flag signaling debug-mode is on/off (used for debug-only assertions i.e. `sw_debug_assert`).
 // - `SW_NO_BUILTIN`: compile-time flag disabling the use of gcc-style `__builtin_*` functions in the source.
 // - `sw_always_assert`: by default crashes at run-time if the condition is false.
-// - `sw_debug_assert`: by default, matches the behavior of `sw_always_assert` if `SW_DEBUG` is non-zero or expands to nothing.
+// - `sw_debug_assert`: by default, matches the behavior of `sw_always_assert` if `SW_DEBUG` or expands to nothing.
 // - `sw_static_assert`: by default crashes at compile-time if the contion is false.
 
 // `SW_API` prefix used to denote all functions in this module (defaults to `static`).
@@ -93,6 +93,12 @@
 #else
 #define sw_debug_assert(cond,...) ((void)0)
 #endif
+#endif
+// `sw_unreachable` in a macro, by default behaving like `__builtin_unreachable()` (or `sw_debug_assert(0)` if NO_BUILTIN).
+#if SW_NO_BUILTIN
+#define sw_unreachable(...) sw_debug_assert(0)
+#else
+#define sw_unreachable(...) __builtin_unreachable()
 #endif
 
 // primitive types
