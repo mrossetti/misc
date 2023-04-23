@@ -148,9 +148,9 @@ sw_static_assert(sizeof(sw_Nat) == sizeof(sw_Int) && sizeof(sw_Nat) >= sizeof(sw
 #define SW_I64_MAX 9223372036854775807
 
 #define SW_U32_LO(w) ((1u<<(w))-1)
-#define SW_U32_HI(w) (SW_U32_LO(w)<<(32-w))
+#define SW_U32_HI(w) (SW_U32_LO(w)<<(32-(w)))
 #define SW_U64_LO(w) ((1llu<<(w))-1)
-#define SW_U64_HI(w) (SW_U64_LO(w)<<(64-w))
+#define SW_U64_HI(w) (SW_U64_LO(w)<<(64-(w)))
 // Optional hex constants SW_U{32|64}_{LO|HI}{N} for N in [1, bitwidth].
 // ```python3
 // from collections import defaultdict
